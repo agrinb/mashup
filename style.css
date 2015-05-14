@@ -1,0 +1,15 @@
+ul {
+  list-style: none;
+  margin-left: -20px;
+}
+
+p {
+  word-wrap: break-word;
+}
+
+form {
+  margin-left: 15px;
+  margin-top: 10px;
+  margin-bottom: 10px;
+  width: 270px;
+}

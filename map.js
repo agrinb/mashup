@@ -3,68 +3,90 @@ $(document).ready(function() {
   
   var Map = function () {
     this.map = L.mapbox.map('map')
-      .setView([40, -100], 5)
+      .setView([40, -100], 4)
       .addLayer(L.mapbox.tileLayer('mapbox.streets'));
     this.geocoder = L.mapbox.geocoder('mapbox.places');
   };
 
-  // var map = L.mapbox.map('map')
-  //     .setView([40, -100], 5)
-  //     .addLayer(L.mapbox.tileLayer('mapbox.streets'));
+  Map.prototype = {
+    mapIt: function(startUp) {
+      var marker = L.marker(startUp.latlng, {
+          icon: L.mapbox.marker.icon({
+            'title': startUp.name,
+            'marker-color': '#f44',
+            'marker-symbol': 'star',
+            'marker-size': 'medium'
+          })
+        });
+      markers.addLayer(marker);
+    },
+    startUpData: function(id) {
+      $.ajax({
+        dataType: 'jsonp',
+        url: 'https://api.angel.co/1/tags/' + id + '/startups'
+      }).done(function(data) {
+        StartUp.prototype.initFromBundle(data.startups);
+      }).fail(function() {
+        console.log('error');
+      });
+    }, 
+    searchBox: function() {
+      $('.form').submit(function(event) {
+        event.preventDefault();
+        var searchQ = $("#query").val();
+        $.ajax({
+          dataType: 'jsonp',
+          url: 'https://api.angel.co/1/search?query=' + searchQ + '&type=MarketTag'
+            }).done(function(data) {
+              tagNum = data[0].id;
+              map.startUpData(tagNum);
+            }).fail(function() {
+          console.log('error');
+        });
+        $('.startups-list').html("");
+      })
+    }
+  }
 
-  // var geocoder = L.mapbox.geocoder('mapbox.places');
-
-  var StartUp = function(name, location) {
+  var StartUp = function(name, location, markets) {
     this.latlng = '',
     this.location = location,
-    this.name = name
+    this.name = name,
+    this.markets = markets; 
   }
 
   StartUp.prototype = {
     assignLatLng: function(err, data) {
       this.latlng = L.latLng(data.latlng[0], data.latlng[1] );
-      mapIt(this);
-      console.log(this.latlng);
+      map.mapIt(this);
     }, 
     initFromBundle: function(array) {
       for (idx in array) {
         var company = array[idx];
         if ( company.locations !== undefined && company.locations[0] !== undefined) {
-          var startUp = new StartUp(company.name, company.locations[0]['display_name']);
+          markets = StartUp.prototype.companyMarkets(company);
+          var startUp = new StartUp(company.name, company.locations[0]['display_name'], markets);
           map.geocoder.query(startUp.location, startUp.assignLatLng.bind(startUp));
-        }
+          startUp.addToPage(startUp);
+        } 
       }
+    },
+    addToPage: function(startUp) {
+      var bullet = document.createElement("li");
+      bullet.innerHTML = '<span><strong>name:</strong> ' + startUp.name + '</span><span><strong> location:</strong> ' + startUp.location + '</span><p><strong>markets:</strong> ' + String(startUp.markets) + '</p>'
+      $('ul').append(bullet);
+    },
+    companyMarkets: function(startUp) {
+      var markets = [];
+      for (idx in startUp.markets) { 
+        markets.push(startUp.markets[idx].display_name);
+      }
+      return markets;
     }
   }
 
   var markers = new L.MarkerClusterGroup();
-
-  var mapIt = function(startUp) {
-    var marker = L.marker(startUp.latlng, {
-        icon: L.mapbox.marker.icon({
-          'title': startUp.name,
-          'marker-color': '#f44',
-          'marker-symbol': 'star',
-          'marker-size': 'medium'
-        })
-      });
-    markers.addLayer(marker);
-  };
-
-  var startUpData = function(id) {
-    $.ajax({
-      dataType: 'jsonp',
-      url: 'https://api.angel.co/1/tags/3/startups'
-    }).done(function(data) {
-      StartUp.prototype.initFromBundle(data.startups);
-    }).fail(function() {
-      console.log('error');
-    });
-  };
-
   L.mapbox.featureLayer('alekgbg.ldc3jgl3').on('ready', function(e) {
-    // The clusterGroup gets each marker in the group added to it
-    // once loaded, and then is added to the map
     var clusterGroup = new L.MarkerClusterGroup();
     e.target.eachLayer(function(layer) {
         clusterGroup.addLayer(layer);
@@ -73,9 +95,8 @@ $(document).ready(function() {
   });
 
   var map = new Map();
-  startUpData();
-
-
+  map.startUpData(3);
+  map.searchBox();
 
 
 
