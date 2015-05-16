@@ -4,4 +4,3 @@ This is a simple mashup that allows you to search Angel List StartUps by industr
 
 ###Note: 
 AngelList API returns 50 records per call. It does not allow you to query for more than 50 records at a time. Although I could have used pagination to get more results to plot. For the sake of this exercise, I chose not to.
-
