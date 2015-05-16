@@ -44,16 +44,26 @@ $(document).ready(function() {
           console.log('error');
         });
         $('.startups-list').html("");
-      })
+      });
+    }, 
+    addLayer: function() {
+      var markers = new L.MarkerClusterGroup();
+        L.mapbox.featureLayer('alekgbg.ldc3jgl3').on('ready', function(e) {
+      var clusterGroup = new L.MarkerClusterGroup();
+      e.target.eachLayer(function(layer) {
+        clusterGroup.addLayer(layer);
+      });
+      this.map.addLayer(markers);
+      });
     }
-  }
+  };
 
   var StartUp = function(name, location, markets) {
-    this.latlng = '',
-    this.location = location,
-    this.name = name,
+    this.latlng = '';
+    this.location = location;
+    this.name = name;
     this.markets = markets; 
-  }
+  };
 
   StartUp.prototype = {
     assignLatLng: function(err, data) {
@@ -65,7 +75,7 @@ $(document).ready(function() {
         var company = array[idx];
         if ( company.locations !== undefined && company.locations[0] !== undefined) {
           markets = StartUp.prototype.companyMarkets(company);
-          var startUp = new StartUp(company.name, company.locations[0]['display_name'], markets);
+          var startUp = new StartUp(company.name, company.locations[0].display_name, markets);
           map.geocoder.query(startUp.location, startUp.assignLatLng.bind(startUp));
           startUp.addToPage(startUp);
         } 
@@ -73,7 +83,7 @@ $(document).ready(function() {
     },
     addToPage: function(startUp) {
       var bullet = document.createElement("li");
-      bullet.innerHTML = '<span><strong>name:</strong> ' + startUp.name + '</span><span><strong> location:</strong> ' + startUp.location + '</span><p><strong>markets:</strong> ' + String(startUp.markets) + '</p>'
+      bullet.innerHTML = '<span><strong>name:</strong> ' + startUp.name + '</span><span><strong> location:</strong> ' + startUp.location + '</span><p><strong>markets:</strong> ' + String(startUp.markets) + '</p>';
       $('ul').append(bullet);
     },
     companyMarkets: function(startUp) {
@@ -83,7 +93,7 @@ $(document).ready(function() {
       }
       return markets;
     }
-  }
+  };
 
   var markers = new L.MarkerClusterGroup();
   L.mapbox.featureLayer('alekgbg.ldc3jgl3').on('ready', function(e) {
@@ -95,7 +105,9 @@ $(document).ready(function() {
   });
 
   var map = new Map();
+  //3 is the tag number for mobile
   map.startUpData(3);
+  map.addLayer();
   map.searchBox();
 
 
